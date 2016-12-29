@@ -52,6 +52,8 @@ roleList is the list of roles that you put into the route specifications for per
 
 publicFileRoleName tells permissionMaster that anyone can access the route.
 
+This does not depend api-manager. (I include this to remind us (especially me) that I thought this through.)
+
 Issue: the mechanism for transmitting the token has become stupid.
 
 

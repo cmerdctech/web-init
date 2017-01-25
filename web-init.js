@@ -30,7 +30,7 @@ var moduleFunction = function(args) {
 			}
 		]
 	});
-	
+
 	qtools.validateProperties({
 		subject: this.config || {},
 		targetScope: this, //will add listed items to targetScope
@@ -41,7 +41,7 @@ var moduleFunction = function(args) {
 			}
 		]
 	});
-	
+
 	qtools.validateProperties({
 		subject: this.config.webInit || {},
 		targetScope: this, //will add listed items to targetScope
@@ -65,15 +65,15 @@ var moduleFunction = function(args) {
 
 	//LOCAL FUNCTIONS ====================================
 
-	
-	const listPaths=()=>{
-				console.log("\nexpress.route path list (at startAll) =========================\n");
-			this.router._router.stack.forEach((item) => {
-				console.log(item.regexp);
-			});
-			console.log("\nEND express.route =========================\n");
 
-};
+	const listPaths = () => {
+		console.log("\nexpress.route path list (at startAll) =========================\n");
+		this.router._router.stack.forEach((item) => {
+			console.log(item.regexp);
+		});
+		console.log("\nEND express.route =========================\n");
+
+	};
 
 	//METHODS AND PROPERTIES ====================================
 
@@ -82,22 +82,25 @@ var moduleFunction = function(args) {
 	}
 
 	//START SERVER =======================================================
-	
-	const expressRoutesErrorHandler=(err, req, res, next)=>{
-			err=err?err:{};
-			if (!err.code || typeof (+err.code) != 'number'){
-				err.code=500;
-			}
-			if (err.errorObject){
-				err.errorText=err.errorObject;
-			}
-			
-			const miscInconsistencyNeedsCleanup=(err.errorText && err.errorText.errorText) || err.message;
-			
-			const foundErrorText=miscInconsistencyNeedsCleanup || err.errorText; //use err.errorText from now on
-			
-			res.status(err.code).send({errorSource:'web-init', errorText:(foundErrorText || 'unexpected error')});
-		};
+
+	const expressRoutesErrorHandler = (err, req, res, next) => {
+		err = err ? err : {};
+		if (!err.code || typeof (+err.code) != 'number') {
+			err.code = 500;
+		}
+		if (err.errorObject) {
+			err.errorText = err.errorObject;
+		}
+
+		const miscInconsistencyNeedsCleanup = (err.errorText && err.errorText.errorText) || err.message;
+
+		const foundErrorText = miscInconsistencyNeedsCleanup || err.errorText; //use err.errorText from now on
+
+		res.status(err.code).send({
+			errorSource: 'web-init',
+			errorText: (foundErrorText || 'unexpected error')
+		});
+	};
 
 	this.startServer = () => {
 
@@ -105,12 +108,13 @@ var moduleFunction = function(args) {
 
 		const server = app.listen(this.port);
 
-		server.on('listening', ()=>{
+		server.on('listening', () => {
 			var address = server.address();
 			var url = 'http://' + (address.address === '::' ?
 				'localhost' : address.address) + ':' + address.port;
-				
-			qtools.message(`${this.name} SERVER starting on ${url}\nat ${new Date().toLocaleDateString('en-US', {
+
+			qtools.message(`${this.name} SERVER starting on ${url}
+at ${new Date().toLocaleDateString('en-US', {
 				hour: '2-digit',
 				minute: '2-digit',
 				second: '2-digit'
@@ -173,31 +177,52 @@ var moduleFunction = function(args) {
 			req.body = req.body.data;
 		}
 
-			if (req.body && req.body.token){
+		if (req.body && req.body.token) {
 			delete req.body.token;
-			}
+		}
 		next();
 	};
 	
-	if(this.config.webInit.htmlFilePath){
-		app.use(express.static(this.config.webInit.htmlFilePath));
+	/*
+		The htmlFilePath is not protected by permissionMaster because it comes before
+		the application of unpackRequest.
+		
+		This is because Safari refuses to display videos sent via staticPageDispatch
+		even though all other browsers do.
+		
+		In the future, I would like to make a file walk that adds paths to 
+		permissionMaster. Presently, however, that would be premature optimization.
+		None of the files here are private.
+		
+		In fact, once that's done, I would like to remove staticFileDispatch. It's
+		purpose is to assemble and process files (I know. Bad name.) and that is
+		not needed for this application.
+	
+	*/
+	
+	if (this.config.webInit.htmlFilePath) {
+		const filePathList = qtools.convertNumericObjectToArray(this.config.webInit.htmlFilePath);
+		for (var i = 0, len = filePathList.length; i < len; i++) {
+			var element = filePathList[i];
+			app.use(express.static(element));
+		}
 	}
 
 	app.use(unpackRequest, this.permissionMaster.checkPath);
-	
+
 
 	let route;
 	let method;
-	
+
 	route = new RegExp('/ping$');
-	method='get';
+	method = 'get';
 	this.permissionMaster.addRoute(method, route, 'all');
-	app[method](route, (req, res, next)=>{
+	app[method](route, (req, res, next) => {
 		res.send(`webInit() says, ${this.config.webInit.name} is up and running at ${req.path}`);
 	})
 
 	//INITIALIZATION ====================================
-	if (this.apiManager){
+	if (this.apiManager) {
 		this.apiManager.registerApi('listPaths', listPaths);
 	}
 
@@ -205,7 +230,7 @@ var moduleFunction = function(args) {
 	this.initCallback();
 
 	return this;
-};			
+};
 
 //END OF moduleFunction() ============================================================
 

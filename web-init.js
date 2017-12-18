@@ -51,27 +51,38 @@ var moduleFunction = function(args) {
 				optional: false
 			},
 			{
-				name: 'name',
-				optional: false
+				name: 'htmlFilePath',
+				optional: true
 			},
 			{
-				name: 'htmlFilePath',
+				name: 'name',
 				optional: true
 			}
 		]
 	});
 
-	this.permissionMaster = new permissionMasterGen(args);
+	qtools.validateProperties({
+		subject: this.config.system || {},
+		targetScope: this, //will add listed items to targetScope
+		propList: [
+			{
+				name: 'name',
+				optional: true
+			}
+		]
+	}); //When this is fit into a larger system, it is preferable to use the overall system name if it exists
 
+	this.permissionMaster = new permissionMasterGen(args);
+	
 	//LOCAL FUNCTIONS ====================================
 
 
 	const listPaths = () => {
-		console.log("\nexpress.route path list (at startAll) =========================\n");
+		qtools.logDebug("\nexpress.route path list (at startAll) =========================\n");
 		this.router._router.stack.forEach((item) => {
-			console.log(item.regexp);
+			qtools.logDebug(item.regexp);
 		});
-		console.log("\nEND express.route =========================\n");
+		qtools.logDebug("\nEND express.route =========================\n");
 
 	};
 
@@ -103,7 +114,6 @@ var moduleFunction = function(args) {
 	};
 
 	this.startServer = () => {
-
 		app.use(expressRoutesErrorHandler);
 
 		const server = app.listen(this.port);
@@ -113,12 +123,9 @@ var moduleFunction = function(args) {
 			var url = 'http://' + (address.address === '::' ?
 				'localhost' : address.address) + ':' + address.port;
 
-			qtools.message(`${this.name} SERVER starting on ${url}
-at ${new Date().toLocaleDateString('en-US', {
-				hour: '2-digit',
-				minute: '2-digit',
-				second: '2-digit'
-			})} `);
+			qtools.logNote(`${this.name} listening on ${url}`, {highlightCapsPrefix:'red'});
+
+
 		});
 
 	}
@@ -150,10 +157,11 @@ at ${new Date().toLocaleDateString('en-US', {
 		req.headers = headers;
 		next();
 	});
-	app.use((req, res, next) => {
-		console.log(`req.path= ${req.path}`);
-		next();
-	});
+	
+// 	app.use((req, res, next) => {
+// 		qtools.logDetail(`req.path= ${req.path}`);
+// 		next();
+// 	});
 
 	const unpackRequest = (req, res, next) => {
 		/*to accomodate the token, the transfer format is:
@@ -194,7 +202,7 @@ at ${new Date().toLocaleDateString('en-US', {
 		permissionMaster. Presently, however, that would be premature optimization.
 		None of the files here are private.
 		
-		In fact, once that's done, I would like to remove staticFileDispatch. It's
+		In fact, once that's done, I would like to remove staticPageDispatch. It's
 		purpose is to assemble and process files (I know. Bad name.) and that is
 		not needed for this application.
 	
@@ -218,7 +226,7 @@ at ${new Date().toLocaleDateString('en-US', {
 	method = 'get';
 	this.permissionMaster.addRoute(method, route, 'all');
 	app[method](route, (req, res, next) => {
-		res.send(`webInit() says, ${this.config.webInit.name} is up and running at ${req.path}`);
+		res.send(`webInit() says, ${this.name} is up and running at ${req.path}`);
 	})
 
 	//INITIALIZATION ====================================

@@ -122,8 +122,7 @@ var moduleFunction = function(args) {
 			var address = server.address();
 			var url = 'http://' + (address.address === '::' ?
 				'localhost' : address.address) + ':' + address.port;
-
-			qtools.logNote(`${this.name} listening on ${url}`, {highlightCapsPrefix:'red'});
+			qtools.logMilestone(`${this.name} listening on ${url}`, {highlightCapsPrefix:'red'});
 
 
 		});
